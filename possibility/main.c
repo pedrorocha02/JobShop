@@ -9,21 +9,21 @@ int main(int argc, char **argv)
     int startTime = 0;
 
     int i;
+    clock_t begin, end;
+    double time_spent;
+    FILE *file, *outputFile;
 
-    FILE *file = fopen("input.txt", "r");
+    if (argc < 3)
+    {
+        printf("This program shoed run like this  ./main input.txt output.txt \n");
+        return -1;
+    };
+
+    file = fopen(argv[1], "r");
 
     if (file == NULL)
     {
         printf("Failed to open the file.\n");
-        return 0;
-    }
-
-    FILE *outputFile;
-    outputFile = fopen("output.txt", "w");
-
-    if (outputFile == NULL)
-    {
-        printf("Error opening the file.\n");
         return 0;
     }
 
@@ -32,7 +32,6 @@ int main(int argc, char **argv)
     Item items[numMachines * numJobs];
 
     timerMachineArray = malloc(numMachines * sizeof(int));
-    ActiveMachineArray = malloc(numMachines * sizeof(ActiveMachine));
     ActiveMachine_registerArray = malloc(numMachines * numJobs * sizeof(ActiveMachine_register));
 
     graph = createGraph(numMachines);
@@ -56,12 +55,21 @@ int main(int argc, char **argv)
 
     fclose(file);
 
+    begin = clock();
+
+    /* here, do your time-consuming job */
+
     // Printing the read data
     printf("Number of Machines: %d\n", numMachines);
     printf("Number of Jobs: %d\n", numJobs);
-    printGraph(graph);
+
+    // printGraph(graph);
     printf("Test sequencial\n");
+    begin = clock();
     printSequencialGraph();
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time runnning this process %lf", time_spent);
 
     printMachinesTimer();
     printMachinesRegisterTimer();
@@ -69,15 +77,34 @@ int main(int argc, char **argv)
     clearMachinesRegisterTimer();
 
     printf("\nBest sequencial\n");
+    begin = clock();
     printBestGraphthread();
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time runnning this process %lf", time_spent);
     printMachinesTimer();
     printMachinesRegisterTimer();
 
     clearMachinesTimer();
     clearMachinesRegisterTimer();
 
+    outputFile = fopen(argv[2], "w");
+
+    if (outputFile == NULL)
+    {
+        printf("Error opening the file.\n");
+        return 0;
+    }
+    for (int i = 0; i < numMachines * numJobs; i++)
+    {
+        fprintf(outputFile, "Number %d with Machine %d Job %d started %d end %d \n", i, ActiveMachine_registerArray[i].machine, ActiveMachine_registerArray[i].job, ActiveMachine_registerArray[i].start, ActiveMachine_registerArray[i].end);
+        // Worst case scenario
+        printf("Machine Number: %d, Operation Time: %d\n", items[i].machineNumber, items[i].operationTime);
+    }
+
+    fclose(outputFile);
+
     free(timerMachineArray);
-    free(ActiveMachineArray);
     deleteGraph(graph);
 
     return 0;

@@ -6,13 +6,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <stdbool.h>
-
-typedef struct
-{
-    int usage;
-    int job;
-
-} ActiveMachine;
+#include <time.h>
 
 typedef struct
 {
@@ -30,40 +24,22 @@ typedef struct
 } Item;
 
 // global variables
+int total_jobs_timer;
 int number_register;
-int total;
-int total_jobs;
 int numMachines, numJobs;
 pthread_mutex_t mutex;
 int *timerMachineArray;
-ActiveMachine *ActiveMachineArray;
 struct Graph *graph;
 ActiveMachine_register *ActiveMachine_registerArray;
 
-// if 0 it mean that machine is free if it is 1 means that is block
-int checkMachineUsage(int machineNumber)
-{
-    if (ActiveMachineArray[machineNumber].job == -1)
-        return ActiveMachineArray[machineNumber].usage;
-    return 1;
-}
-int blockMachineUsage(int machineNumber, int job)
-{
-    pthread_mutex_lock(&mutex);
-    ActiveMachineArray[machineNumber].usage = 1;
-    ActiveMachineArray[machineNumber].job = job;
-    pthread_mutex_unlock(&mutex);
-}
-int freeMachineUsage(int machineNumber)
-{
-    pthread_mutex_lock(&mutex);
-    ActiveMachineArray[machineNumber].usage = 0;
-    ActiveMachineArray[machineNumber].job = -1;
-    pthread_mutex_unlock(&mutex);
-}
 int updateMachineUsage(int machineNumber, int update)
 {
+    int time_now;
+    pthread_mutex_lock(&mutex);
+    time_now = timerMachineArray[machineNumber];
     timerMachineArray[machineNumber] = timerMachineArray[machineNumber] + update;
+    pthread_mutex_unlock(&mutex);
+    return time_now;
 }
 int printMachinesTimer()
 {
