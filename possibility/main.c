@@ -99,7 +99,7 @@ int main(int argc, char **argv)
     {
         fprintf(outputFile, "Number %d with Machine %d Job %d started %d end %d \n", i, ActiveMachine_registerArray[i].machine, ActiveMachine_registerArray[i].job, ActiveMachine_registerArray[i].start, ActiveMachine_registerArray[i].end);
         // Worst case scenario
-        printf("Machine Number: %d, Operation Time: %d\n", items[i].machineNumber, items[i].operationTime);
+        // printf("Machine Number: %d, Operation Time: %d\n", items[i].machineNumber, items[i].operationTime);
     }
 
     fclose(outputFile);

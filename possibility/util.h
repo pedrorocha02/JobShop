@@ -38,6 +38,7 @@ int updateMachineUsage(int machineNumber, int update)
     pthread_mutex_lock(&mutex);
     time_now = timerMachineArray[machineNumber];
     timerMachineArray[machineNumber] = timerMachineArray[machineNumber] + update;
+    total_jobs_timer = total_jobs_timer + update;
     pthread_mutex_unlock(&mutex);
     return time_now;
 }
@@ -68,11 +69,18 @@ int updateRegisterUsage(int machine, int job, int start, int end)
 }
 int printMachinesRegisterTimer()
 {
+    int total_time = 0;
     printf("timer \n");
     for (int i = 0; i < numMachines * numJobs; i++)
     {
+        if (total_time < ActiveMachine_registerArray[i].end)
+        {
+            total_time = ActiveMachine_registerArray[i].end;
+        }
         printf("Number %d with Machine %d Job %d started %d end %d \n", i, ActiveMachine_registerArray[i].machine, ActiveMachine_registerArray[i].job, ActiveMachine_registerArray[i].start, ActiveMachine_registerArray[i].end);
     }
+    printf("Total of time of all the machines %d\n", total_jobs_timer);
+    printf("Total of time %d\n", total_time);
 }
 int clearMachinesRegisterTimer()
 {

@@ -3,6 +3,7 @@
 
 void printSequencialGraph()
 {
+    total_jobs_timer = 0;
     int time_now = 0;
     int v;
     number_register = 0;

@@ -33,6 +33,7 @@ void *Increment(void *vargp)
 
 void printBestGraphthread()
 {
+    total_jobs_timer = 0;
     number_register = 0;
     long thread;
     pthread_t *thread_handles;
