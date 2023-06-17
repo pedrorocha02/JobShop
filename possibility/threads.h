@@ -35,19 +35,33 @@ void printBestGraphthread()
 {
     total_jobs_timer = 0;
     number_register = 0;
+    int ret = 0;
     long thread;
     pthread_t *thread_handles;
     thread_handles = malloc(numJobs * sizeof(pthread_t));
 
     pthread_mutex_init(&mutex, NULL);
 
-    for (thread = 1; thread <= numJobs; thread++)
-        pthread_create(&thread_handles[thread], NULL, Increment, (void *)thread);
-
-    for (thread = 1; thread <= numJobs; thread++)
-        pthread_join(thread_handles[thread], NULL);
+    for (thread = 1; thread <= numJobs;)
+    {
+        ret = pthread_create(&thread_handles[thread], NULL, Increment, (void *)thread);
+        if (ret == 0)
+        {
+            thread++;
+        }
+    }
+    ret = 0;
+    for (thread = 1; thread <= numJobs;)
+    {
+        ret = pthread_join(thread_handles[thread], NULL);
+        if (ret == 0)
+        {
+            thread++;
+        }
+    }
 
     free(thread_handles);
+    pthread_mutex_destroy(&mutex);
     // printf("total of the total -> %d \n", total_jobs);
 }
 

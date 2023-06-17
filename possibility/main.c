@@ -27,7 +27,7 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    fscanf(file, "%d %d", &numMachines, &numJobs);
+    fscanf(file, "%d %d", &numJobs, &numMachines);
 
     Item items[numMachines * numJobs];
 

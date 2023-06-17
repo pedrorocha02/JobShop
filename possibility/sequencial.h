@@ -9,6 +9,7 @@ void printSequencialGraph()
     number_register = 0;
     int level = 0;
     int count = 0;
+    pthread_mutex_init(&mutex, NULL);
     for (int i = 1; i <= numJobs; i++)
     {
         // printf("jobs_id-> %d \n", i);
@@ -32,6 +33,7 @@ void printSequencialGraph()
             }
         }
     }
+    pthread_mutex_destroy(&mutex);
 }
 
 #endif
