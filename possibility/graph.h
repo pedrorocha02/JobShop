@@ -13,7 +13,7 @@ struct AdjListNode
 {
     int jobs_id;
     int duration;
-    int dest;
+    int level;
     int machine;
     struct AdjListNode *next;
 };
@@ -35,13 +35,13 @@ struct Graph
 };
 
 // A utility function to create a new adjacency list node
-struct AdjListNode *newAdjListNode(int dest, int duration, int jobs_id, int machine)
+struct AdjListNode *newAdjListNode(int jobs_id, int duration, int level, int machine)
 {
     struct AdjListNode *newNode = (struct AdjListNode *)malloc(
         sizeof(struct AdjListNode));
     newNode->jobs_id = jobs_id;
     newNode->duration = duration;
-    newNode->dest = dest;
+    newNode->level = level;
     newNode->machine = machine;
     newNode->next = NULL;
     return newNode;
@@ -68,23 +68,23 @@ struct Graph *createGraph(int V)
 }
 
 // Adds an edge to an undirected graph
-void addEdge(struct Graph *graph, int src, int dest, int duration, int jobs_id, int machine)
+void addEdge(struct Graph *graph, int job_id_src, int job_id_dest, int duration, int level, int machine)
 {
-    // Add an edge from src to dest.  A new node is
+    // Add an edge from job_id_src to job_id_dest.  A new node is
     // added to the adjacency list of src.  The node
     // is added at the beginning
     struct AdjListNode *check = NULL;
-    struct AdjListNode *newNode = newAdjListNode(dest, duration, jobs_id, machine);
+    struct AdjListNode *newNode = newAdjListNode(job_id_dest, duration, level, machine);
 
-    if (graph->array[src].head == NULL)
+    if (graph->array[job_id_src].head == NULL)
     {
-        newNode->next = graph->array[src].head;
-        graph->array[src].head = newNode;
+        newNode->next = graph->array[job_id_src].head;
+        graph->array[job_id_src].head = newNode;
     }
     else
     {
 
-        check = graph->array[src].head;
+        check = graph->array[job_id_src].head;
         while (check->next != NULL)
         {
             check = check->next;
@@ -123,7 +123,7 @@ void printGraph(struct Graph *graph)
         printf("\nAdjacency list of vertex %d\nhead \n", v);
         while (pCrawl)
         {
-            printf("jobs_id-> %d level -> %d machine -> %d duration -> %d \n", pCrawl->jobs_id, pCrawl->dest, pCrawl->machine, pCrawl->duration);
+            printf("jobs_id-> %d level -> %d machine -> %d duration -> %d \n", pCrawl->jobs_id, pCrawl->level, pCrawl->machine, pCrawl->duration);
             pCrawl = pCrawl->next;
         }
         printf("\n");

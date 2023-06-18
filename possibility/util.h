@@ -28,9 +28,30 @@ int total_jobs_timer;
 int number_register;
 int numMachines, numJobs;
 pthread_mutex_t mutex;
-int *timerMachineArray;
+int *timerMachineArray, *timerJobsArray;
 struct Graph *graph;
 ActiveMachine_register *ActiveMachine_registerArray;
+
+int updateJobUsage(int JobNumber, int update)
+{
+
+    timerJobsArray[JobNumber] = timerJobsArray[JobNumber] + update;
+}
+int printJobsTimer()
+{
+    printf("Jobs timer \n");
+    for (int i = 0; i < numJobs; i++)
+    {
+        printf("Job %d with %d \n", i, timerJobsArray[i]);
+    }
+}
+int clearJobsTimer()
+{
+    for (int i = 0; i < numJobs; i++)
+    {
+        timerJobsArray[i] = 0;
+    }
+}
 
 int updateMachineUsage(int machineNumber, int update)
 {
@@ -44,7 +65,7 @@ int updateMachineUsage(int machineNumber, int update)
 }
 int printMachinesTimer()
 {
-    printf("timer \n");
+    printf("Machine timer \n");
     for (int i = 0; i < numMachines; i++)
     {
         printf("Machine %d with %d \n", i, timerMachineArray[i]);
@@ -80,7 +101,7 @@ int printMachinesRegisterTimer()
         printf("Number %d with Machine %d Job %d started %d end %d \n", i, ActiveMachine_registerArray[i].machine, ActiveMachine_registerArray[i].job, ActiveMachine_registerArray[i].start, ActiveMachine_registerArray[i].end);
     }
     printf("Total of time of all the machines %d\n", total_jobs_timer);
-    printf("Total of time %d\n", total_time);
+    printf("Max time of machine  %d\n", total_time);
 }
 int clearMachinesRegisterTimer()
 {

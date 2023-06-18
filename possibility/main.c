@@ -32,12 +32,13 @@ int main(int argc, char **argv)
     Item items[numMachines * numJobs];
 
     timerMachineArray = malloc(numMachines * sizeof(int));
+    timerJobsArray = malloc(numJobs * sizeof(int));
     ActiveMachine_registerArray = malloc(numMachines * numJobs * sizeof(ActiveMachine_register));
 
-    graph = createGraph(numMachines);
+    graph = createGraph(numJobs);
 
     int level = 0;
-    int job_number = 0;
+    int job_number = -1;
 
     for (int i = 0; i < numMachines * numJobs; i++, level++)
     {
@@ -50,7 +51,7 @@ int main(int argc, char **argv)
             level = 0;
             job_number++;
         }
-        addEdge(graph, level, level + 1, items[i].operationTime, job_number, items[i].machineNumber);
+        addEdge(graph, job_number, job_number + 1, items[i].operationTime, level, items[i].machineNumber);
     }
 
     fclose(file);
@@ -72,8 +73,10 @@ int main(int argc, char **argv)
     printf("Time runnning this process %lf", time_spent);
 
     printMachinesTimer();
+    printJobsTimer();
     printMachinesRegisterTimer();
     clearMachinesTimer();
+    clearJobsTimer();
     clearMachinesRegisterTimer();
 
     printf("\nBest sequencial\n");
@@ -83,9 +86,11 @@ int main(int argc, char **argv)
     time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
     printf("Time runnning this process %lf", time_spent);
     printMachinesTimer();
+    printJobsTimer();
     printMachinesRegisterTimer();
 
     clearMachinesTimer();
+    clearJobsTimer();
     clearMachinesRegisterTimer();
 
     outputFile = fopen(argv[2], "w");
