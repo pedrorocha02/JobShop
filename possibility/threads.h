@@ -41,7 +41,7 @@ void printBestGraphthread()
     pthread_t *thread_handles;
     thread_handles = malloc(numJobs * sizeof(pthread_t));
 
-    pthread_mutex_init(&mutex, NULL);
+    initMutexMachines();
 
     for (thread = 0; thread < numJobs;)
     {
@@ -62,7 +62,6 @@ void printBestGraphthread()
     }
 
     free(thread_handles);
-    pthread_mutex_destroy(&mutex);
     // printf("total of the total -> %d \n", total_jobs);
 }
 

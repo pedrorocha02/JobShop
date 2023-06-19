@@ -23,14 +23,20 @@ typedef struct
     int operationTime;
 } Item;
 
+typedef struct
+{
+    int operationTime;
+    pthread_mutex_t mutex;
+} Machine_item;
+
 // global variables
 int total_jobs_timer;
 int number_register;
 int numMachines, numJobs;
-pthread_mutex_t mutex;
-int *timerMachineArray, *timerJobsArray;
+int *timerJobsArray;
 struct Graph *graph;
 ActiveMachine_register *ActiveMachine_registerArray;
+Machine_item *timerMachineArray;
 
 int updateJobUsage(int JobNumber, int update)
 {
@@ -56,11 +62,11 @@ int clearJobsTimer()
 int updateMachineUsage(int machineNumber, int update)
 {
     int time_now;
-    pthread_mutex_lock(&mutex);
-    time_now = timerMachineArray[machineNumber];
-    timerMachineArray[machineNumber] = timerMachineArray[machineNumber] + update;
+    pthread_mutex_lock(&timerMachineArray[machineNumber].mutex);
+    time_now = timerMachineArray[machineNumber].operationTime;
+    timerMachineArray[machineNumber].operationTime = timerMachineArray[machineNumber].operationTime + update;
     total_jobs_timer = total_jobs_timer + update;
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&timerMachineArray[machineNumber].mutex);
     return time_now;
 }
 int printMachinesTimer()
@@ -68,14 +74,23 @@ int printMachinesTimer()
     printf("Machine timer \n");
     for (int i = 0; i < numMachines; i++)
     {
-        printf("Machine %d with %d \n", i, timerMachineArray[i]);
+        printf("Machine %d with %d \n", i, timerMachineArray[i].operationTime);
     }
 }
 int clearMachinesTimer()
 {
     for (int i = 0; i < numMachines; i++)
     {
-        timerMachineArray[i] = 0;
+        timerMachineArray[i].operationTime = 0;
+        pthread_mutex_destroy(&timerMachineArray[i].mutex);
+    }
+}
+
+int initMutexMachines()
+{
+    for (int i = 0; i < numMachines; i++)
+    {
+        pthread_mutex_init(&timerMachineArray[i].mutex, NULL);
     }
 }
 

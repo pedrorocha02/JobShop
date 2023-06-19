@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 
     Item items[numMachines * numJobs];
 
-    timerMachineArray = malloc(numMachines * sizeof(int));
+    timerMachineArray = malloc(numMachines * sizeof(Machine_item));
     timerJobsArray = malloc(numJobs * sizeof(int));
     ActiveMachine_registerArray = malloc(numMachines * numJobs * sizeof(ActiveMachine_register));
 
