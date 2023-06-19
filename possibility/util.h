@@ -40,14 +40,14 @@ int updateJobUsage(int JobNumber, int update)
 int printJobsTimer()
 {
     printf("Jobs timer \n");
-    for (int i = 0; i < numJobs; i++)
+    for (int i = 1; i <= numJobs; i++)
     {
         printf("Job %d with %d \n", i, timerJobsArray[i]);
     }
 }
 int clearJobsTimer()
 {
-    for (int i = 0; i < numJobs; i++)
+    for (int i = 1; i <= numJobs; i++)
     {
         timerJobsArray[i] = 0;
     }

@@ -64,7 +64,7 @@ int main(int argc, char **argv)
     printf("Number of Machines: %d\n", numMachines);
     printf("Number of Jobs: %d\n", numJobs);
 
-    // printGraph(graph);
+    printGraph(graph);
     printf("Test sequencial\n");
     begin = clock();
     printSequencialGraph();
@@ -85,13 +85,10 @@ int main(int argc, char **argv)
     end = clock();
     time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
     printf("Time runnning this process %lf", time_spent);
+
     printMachinesTimer();
     printJobsTimer();
     printMachinesRegisterTimer();
-
-    clearMachinesTimer();
-    clearJobsTimer();
-    clearMachinesRegisterTimer();
 
     outputFile = fopen(argv[2], "w");
 
@@ -108,6 +105,10 @@ int main(int argc, char **argv)
     }
 
     fclose(outputFile);
+
+    clearMachinesTimer();
+    clearJobsTimer();
+    clearMachinesRegisterTimer();
 
     free(timerMachineArray);
     deleteGraph(graph);
