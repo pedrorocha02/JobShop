@@ -97,9 +97,10 @@ int main(int argc, char **argv)
         printf("Error opening the file.\n");
         return 0;
     }
+    fprintf(outputFile, "job id; operation ;start time ; machine id; operation time \n");
     for (int i = 0; i < numMachines * numJobs; i++)
     {
-        fprintf(outputFile, "Number %d with Machine %d Job %d started %d end %d \n", i, ActiveMachine_registerArray[i].machine, ActiveMachine_registerArray[i].job, ActiveMachine_registerArray[i].start, ActiveMachine_registerArray[i].end);
+        fprintf(outputFile, "%d ;%d ;%d ; %d; %d \n", ActiveMachine_registerArray[i].job, i, ActiveMachine_registerArray[i].start, ActiveMachine_registerArray[i].machine, ActiveMachine_registerArray[i].end - ActiveMachine_registerArray[i].start);
         // Worst case scenario
         // printf("Machine Number: %d, Operation Time: %d\n", items[i].machineNumber, items[i].operationTime);
     }
