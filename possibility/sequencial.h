@@ -23,8 +23,7 @@ void printSequencialGraph()
             //{
             // printf("jobs_id-> %d level -> %d machine -> %d duration -> %d \n", pCrawl->jobs_id, pCrawl->dest, pCrawl->machine, pCrawl->duration);
             //   blockMachineUsage(pCrawl->machine, pCrawl->jobs_id);
-            updateMachineUsage(pCrawl->machine, pCrawl->duration);
-            updateJobUsage(pCrawl->jobs_id, pCrawl->duration);
+            updateMachineUsage(pCrawl->machine, pCrawl->duration, v, level);
             updateRegisterUsage(pCrawl->machine, pCrawl->jobs_id, time_now, time_now + pCrawl->duration);
             time_now = time_now + pCrawl->duration;
             // freeMachineUsage(pCrawl->machine);

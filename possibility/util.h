@@ -25,48 +25,87 @@ typedef struct
 
 typedef struct
 {
+    int previes_job_id;
     int operationTime;
     pthread_mutex_t mutex;
 } Machine_item;
 
+typedef struct
+{
+    int operationTime;
+    int level;
+    pthread_mutex_t mutex;
+} Job_item;
+
 // global variables
 int total_jobs_timer;
+int timer_global;
 int number_register;
 int numMachines, numJobs;
-int *timerJobsArray;
+int *timeMachineMax;
+Job_item *timerJobsArray;
 struct Graph *graph;
 ActiveMachine_register *ActiveMachine_registerArray;
 Machine_item *timerMachineArray;
 
 int updateJobUsage(int JobNumber, int update)
 {
+    int time_now;
+    pthread_mutex_lock(&timerJobsArray[JobNumber].mutex);
+    time_now = timerJobsArray[JobNumber].operationTime;
+    timerJobsArray[JobNumber].operationTime = timerJobsArray[JobNumber].operationTime + update;
+    pthread_mutex_unlock(&timerJobsArray[JobNumber].mutex);
+    return time_now;
+}
 
-    timerJobsArray[JobNumber] = timerJobsArray[JobNumber] + update;
+int CheckJobUsage(int job)
+{
+    int total = 0;
+    for (int i = 0; i < number_register; i++)
+    {
+        if (ActiveMachine_registerArray[i].job == job)
+        {
+            total = ActiveMachine_registerArray[i].end;
+        }
+    }
+    return total;
 }
 int printJobsTimer()
 {
     printf("Jobs timer \n");
     for (int i = 1; i <= numJobs; i++)
     {
-        printf("Job %d with %d \n", i, timerJobsArray[i]);
+        printf("Job %d with %d \n", i, timerJobsArray[i].operationTime);
     }
 }
 int clearJobsTimer()
 {
     for (int i = 1; i <= numJobs; i++)
     {
-        timerJobsArray[i] = 0;
+        timerJobsArray[i].operationTime = 0;
     }
 }
-
-int updateMachineUsage(int machineNumber, int update)
+int updateRegisterUsage(int machine, int job, int start, int end)
 {
-    int time_now;
+    ActiveMachine_registerArray[number_register].job = job;
+    ActiveMachine_registerArray[number_register].machine = machine;
+    ActiveMachine_registerArray[number_register].start = start;
+    ActiveMachine_registerArray[number_register].end = end;
+    number_register++;
+}
+
+int updateMachineUsage(int machineNumber, int update, int job_id, int level)
+{
+    int time_now, time_job;
+    pthread_mutex_lock(&timerJobsArray[job_id].mutex);
     pthread_mutex_lock(&timerMachineArray[machineNumber].mutex);
-    time_now = timerMachineArray[machineNumber].operationTime;
+    time_now = timerMachineArray[machineNumber].operationTime + CheckJobUsage(job_id);
+    timerJobsArray[job_id].operationTime = timerJobsArray[job_id].operationTime + update;
     timerMachineArray[machineNumber].operationTime = timerMachineArray[machineNumber].operationTime + update;
-    total_jobs_timer = total_jobs_timer + update;
+    updateRegisterUsage(machineNumber, job_id, time_now, time_now + update);
+    timerJobsArray[job_id].level = level;
     pthread_mutex_unlock(&timerMachineArray[machineNumber].mutex);
+    pthread_mutex_unlock(&timerJobsArray[job_id].mutex);
     return time_now;
 }
 int printMachinesTimer()
@@ -77,12 +116,25 @@ int printMachinesTimer()
         printf("Machine %d with %d \n", i, timerMachineArray[i].operationTime);
     }
 }
+int printMachinesMaxTimer()
+{
+    printf("Machine timer max \n");
+    for (int i = 0; i < numMachines; i++)
+    {
+        printf("Machine %d with %d \n", i, timeMachineMax[i]);
+    }
+}
 int clearMachinesTimer()
 {
     for (int i = 0; i < numMachines; i++)
     {
         timerMachineArray[i].operationTime = 0;
         pthread_mutex_destroy(&timerMachineArray[i].mutex);
+    }
+    for (int i = 0; i < numJobs; i++)
+    {
+        timerJobsArray[i].operationTime = 0;
+        pthread_mutex_destroy(&timerJobsArray[i].mutex);
     }
 }
 
@@ -92,17 +144,13 @@ int initMutexMachines()
     {
         pthread_mutex_init(&timerMachineArray[i].mutex, NULL);
     }
+    for (int i = 0; i < numJobs; i++)
+    {
+        timerJobsArray[i].operationTime = 0;
+        pthread_mutex_init(&timerJobsArray[i].mutex, NULL);
+    }
 }
 
-int updateRegisterUsage(int machine, int job, int start, int end)
-{
-
-    ActiveMachine_registerArray[number_register].job = job;
-    ActiveMachine_registerArray[number_register].machine = machine;
-    ActiveMachine_registerArray[number_register].start = start;
-    ActiveMachine_registerArray[number_register].end = end;
-    number_register++;
-}
 int printMachinesRegisterTimer()
 {
     int total_time = 0;

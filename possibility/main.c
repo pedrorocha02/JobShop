@@ -9,13 +9,15 @@ int main(int argc, char **argv)
     int startTime = 0;
 
     int i;
-    clock_t begin, end;
+    int number_of_threadas;
+    clock_t begin,
+        end;
     double time_spent;
     FILE *file, *outputFile;
 
     if (argc < 3)
     {
-        printf("This program shoed run like this  ./main input.txt output.txt \n");
+        printf("This program shoed run like this  ./main input.txt output.txt (number of threads) \n");
         return -1;
     };
 
@@ -32,7 +34,8 @@ int main(int argc, char **argv)
     Item items[numMachines * numJobs];
 
     timerMachineArray = malloc(numMachines * sizeof(Machine_item));
-    timerJobsArray = malloc(numJobs * sizeof(int));
+    timeMachineMax = malloc(numMachines * sizeof(int));
+    timerJobsArray = malloc((numJobs + 1) * sizeof(Job_item));
     ActiveMachine_registerArray = malloc(numMachines * numJobs * sizeof(ActiveMachine_register));
 
     graph = createGraph(numJobs);
@@ -52,11 +55,10 @@ int main(int argc, char **argv)
             job_number++;
         }
         addEdge(graph, job_number, job_number + 1, items[i].operationTime, level, items[i].machineNumber);
+        timeMachineMax[items[i].machineNumber] = timeMachineMax[items[i].machineNumber] + items[i].operationTime;
     }
 
     fclose(file);
-
-    begin = clock();
 
     /* here, do your time-consuming job */
 
@@ -64,8 +66,9 @@ int main(int argc, char **argv)
     printf("Number of Machines: %d\n", numMachines);
     printf("Number of Jobs: %d\n", numJobs);
 
-    printGraph(graph);
-    printf("Test sequencial\n");
+    // printGraph(graph);
+    // printMachinesMaxTimer();
+    /*printf("Test sequencial\n");
     begin = clock();
     printSequencialGraph();
     end = clock();
@@ -78,10 +81,12 @@ int main(int argc, char **argv)
     clearMachinesTimer();
     clearJobsTimer();
     clearMachinesRegisterTimer();
+*/
 
     printf("\nBest sequencial\n");
     begin = clock();
-    printBestGraphthread();
+    sscanf(argv[3], "%d", &number_of_threadas);
+    startBestGraphthread(number_of_threadas);
     end = clock();
     time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
     printf("Time runnning this process %lf", time_spent);
