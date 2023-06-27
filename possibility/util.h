@@ -23,68 +23,11 @@ typedef struct
     int operationTime;
 } Item;
 
-typedef struct
-{
-    int previes_job_id;
-    int operationTime;
-    pthread_mutex_t mutex;
-} Machine_item;
-
-typedef struct
-{
-    int operationTime;
-    int level;
-    pthread_mutex_t mutex;
-} Job_item;
-
-// global variables
-int total_jobs_timer;
-int timer_global;
 int number_register;
 int numMachines, numJobs;
-int *timeMachineMax;
-Job_item *timerJobsArray;
-struct Graph *graph;
+struct Graph *graph, *sumgraph;
+
 ActiveMachine_register *ActiveMachine_registerArray;
-Machine_item *timerMachineArray;
-
-int updateJobUsage(int JobNumber, int update)
-{
-    int time_now;
-    pthread_mutex_lock(&timerJobsArray[JobNumber].mutex);
-    time_now = timerJobsArray[JobNumber].operationTime;
-    timerJobsArray[JobNumber].operationTime = timerJobsArray[JobNumber].operationTime + update;
-    pthread_mutex_unlock(&timerJobsArray[JobNumber].mutex);
-    return time_now;
-}
-
-int CheckJobUsage(int job)
-{
-    int total = 0;
-    for (int i = 0; i < number_register; i++)
-    {
-        if (ActiveMachine_registerArray[i].job == job)
-        {
-            total = ActiveMachine_registerArray[i].end;
-        }
-    }
-    return total;
-}
-int printJobsTimer()
-{
-    printf("Jobs timer \n");
-    for (int i = 1; i <= numJobs; i++)
-    {
-        printf("Job %d with %d \n", i, timerJobsArray[i].operationTime);
-    }
-}
-int clearJobsTimer()
-{
-    for (int i = 1; i <= numJobs; i++)
-    {
-        timerJobsArray[i].operationTime = 0;
-    }
-}
 int updateRegisterUsage(int machine, int job, int start, int end)
 {
     ActiveMachine_registerArray[number_register].job = job;
@@ -92,63 +35,6 @@ int updateRegisterUsage(int machine, int job, int start, int end)
     ActiveMachine_registerArray[number_register].start = start;
     ActiveMachine_registerArray[number_register].end = end;
     number_register++;
-}
-
-int updateMachineUsage(int machineNumber, int update, int job_id, int level)
-{
-    int time_now, time_job;
-    pthread_mutex_lock(&timerJobsArray[job_id].mutex);
-    pthread_mutex_lock(&timerMachineArray[machineNumber].mutex);
-    time_now = timerMachineArray[machineNumber].operationTime + CheckJobUsage(job_id);
-    timerJobsArray[job_id].operationTime = timerJobsArray[job_id].operationTime + update;
-    timerMachineArray[machineNumber].operationTime = timerMachineArray[machineNumber].operationTime + update;
-    updateRegisterUsage(machineNumber, job_id, time_now, time_now + update);
-    timerJobsArray[job_id].level = level;
-    pthread_mutex_unlock(&timerMachineArray[machineNumber].mutex);
-    pthread_mutex_unlock(&timerJobsArray[job_id].mutex);
-    return time_now;
-}
-int printMachinesTimer()
-{
-    printf("Machine timer \n");
-    for (int i = 0; i < numMachines; i++)
-    {
-        printf("Machine %d with %d \n", i, timerMachineArray[i].operationTime);
-    }
-}
-int printMachinesMaxTimer()
-{
-    printf("Machine timer max \n");
-    for (int i = 0; i < numMachines; i++)
-    {
-        printf("Machine %d with %d \n", i, timeMachineMax[i]);
-    }
-}
-int clearMachinesTimer()
-{
-    for (int i = 0; i < numMachines; i++)
-    {
-        timerMachineArray[i].operationTime = 0;
-        pthread_mutex_destroy(&timerMachineArray[i].mutex);
-    }
-    for (int i = 0; i < numJobs; i++)
-    {
-        timerJobsArray[i].operationTime = 0;
-        pthread_mutex_destroy(&timerJobsArray[i].mutex);
-    }
-}
-
-int initMutexMachines()
-{
-    for (int i = 0; i < numMachines; i++)
-    {
-        pthread_mutex_init(&timerMachineArray[i].mutex, NULL);
-    }
-    for (int i = 0; i < numJobs; i++)
-    {
-        timerJobsArray[i].operationTime = 0;
-        pthread_mutex_init(&timerJobsArray[i].mutex, NULL);
-    }
 }
 
 int printMachinesRegisterTimer()
@@ -163,17 +49,123 @@ int printMachinesRegisterTimer()
         }
         printf("Number %d with Machine %d Job %d started %d end %d \n", i, ActiveMachine_registerArray[i].machine, ActiveMachine_registerArray[i].job, ActiveMachine_registerArray[i].start, ActiveMachine_registerArray[i].end);
     }
-    printf("Total of time of all the machines %d\n", total_jobs_timer);
-    printf("Max time of machine  %d\n", total_time);
 }
-int clearMachinesRegisterTimer()
+
+///////////////////////
+typedef struct
 {
-    for (int i = 0; i < numMachines * numJobs; i++)
+    // processing time
+    int processing_time;
+    // real time
+    int real_time;
+    // the due date
+    int due_date;
+} shiftingBottleneckHeuristic;
+
+typedef struct
+{
+    int job_id;
+    // processing time
+    int processing_time;
+    // real time
+    int t;
+    // the due date
+    int due_date;
+} Branch_Bound;
+typedef struct
+{
+    Branch_Bound *EDD_table;
+    int machine_number;
+} machine_Branch_Bound;
+
+typedef struct
+{
+    // lowerbound
+    int lowerbound;
+    // machine_number
+    int machine_number;
+} machine_settings;
+
+// struct used to use threads in startShiftingBottleneckHeuristictGraph
+typedef struct
+{
+    shiftingBottleneckHeuristic *shiftingbottleneck_table;
+    machine_settings machine;
+} Info_machine;
+
+typedef struct
+{
+    int job_id;
+    int machine_id;
+} Info_thread;
+
+// shiftingBottleneckHeuristic *shiftingbottleneck_table;
+Branch_Bound *EDD_table;
+Info_machine *info_machine_global;
+machine_settings *machine_set;
+machine_Branch_Bound *EDD_table_global;
+
+int sortMachinesMaxTimer()
+{
+    int max = 0, temp_max = 0;
+    machine_settings temp;
+    // printf("Machine timer max \n");
+    for (int i = 0; i < numMachines; i++)
     {
-        ActiveMachine_registerArray[i].machine = -1;
-        ActiveMachine_registerArray[i].job = -1;
-        ActiveMachine_registerArray[i].start = -1;
-        ActiveMachine_registerArray[i].end = -1;
+        for (int y = 0; y < numMachines; y++)
+        {
+            if (machine_set[i].lowerbound > machine_set[y].lowerbound)
+            {
+                temp = machine_set[i];
+                machine_set[i] = machine_set[y];
+                machine_set[y] = temp;
+            }
+        }
+    }
+    // lowerbound max the minimal value to work
+    for (int i = 0; i < numMachines; i++)
+    {
+        info_machine_global[i].machine.lowerbound = machine_set[i].lowerbound;
+        info_machine_global[i].machine.machine_number = machine_set[i].machine_number;
     }
 }
+int printMachinesMaxTimer()
+{
+    machine_settings temp;
+    // printf("Machine timer max \n");
+    for (int i = 0; i < numMachines; i++)
+    {
+        printf(" value for machine %d with lowerbown = %d \n", machine_set[i].machine_number, machine_set[i].lowerbound);
+    }
+}
+
+int printMachinesMaxshiftingBottleneckHeuristicTimer()
+{
+    for (int y = 0; y < numMachines; y++)
+    {
+        printf("Machine number %d with max %d\n", info_machine_global[y].machine.machine_number, info_machine_global[y].machine.lowerbound);
+
+        for (int i = 0; i < numJobs; i++)
+        {
+            printf(" value for job %d with p = %d  r = %d dd = %d\n", i, info_machine_global[y].shiftingbottleneck_table[i].processing_time,
+                   info_machine_global[y].shiftingbottleneck_table[i].real_time,
+                   info_machine_global[y].shiftingbottleneck_table[i].due_date);
+        }
+    }
+}
+
+int printMachineEDDTimer()
+{
+    int max;
+    for (int i = 0; i < numJobs; i++)
+    {
+        if (max < EDD_table[i].t)
+            max = EDD_table[i].t;
+        printf(" value for job %d with processing time = %d  due date = %d t = %d\n", EDD_table[i].job_id, EDD_table[i].processing_time, EDD_table[i].due_date, EDD_table[i].t);
+    }
+    printf("Max value %d\n", max);
+}
+
+/////////////////////////////////////////////
+
 #endif
