@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 typedef struct
 {
@@ -44,20 +45,15 @@ void main()
     printf("Number of Jobs: %d\n", numJobs);
 
     int totalOperationTime = 0;
-    int startTime = 0;
 
     for (int i = 0; i < numMachines * numJobs; i++)
     {
         fprintf(outputFile, "Job Number: %d, Operation Number: %d, Start Time: %d, Machine Number: %d, Operation Time: %d\n",
                 i / numMachines, i % numMachines, totalOperationTime, items[i].machineNumber, items[i].operationTime);
-        // Worst case scenario
-        printf("Machine Number: %d, Operation Time: %d\n", items[i].machineNumber, items[i].operationTime);
-        // Sum of the operation total (Similar to a fspan)
         totalOperationTime += items[i].operationTime;
     }
-
+    fprintf(outputFile, "Total Operation Time: %d\n", totalOperationTime);
     fclose(outputFile);
-    printf("Total Operation Time (including delays): %d\n", totalOperationTime);
 
     return;
 }
