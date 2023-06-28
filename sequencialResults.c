@@ -11,7 +11,7 @@ int main()
 
     // Compile and execute sequential.c
     system("gcc sequencial.c -o sequencial");
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 1; i++)
     {
         system("D:/CAD/TrabalhoGrupo/sequencial.exe input.txt output.txt");
     }

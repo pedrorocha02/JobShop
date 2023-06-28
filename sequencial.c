@@ -12,12 +12,14 @@ typedef struct
     int id;
     Item *sequence;
     int size;
+    int totalTime;
 } Job;
 
 typedef struct
 {
     int id;
     int hasJob;
+    int totalTime;
 } Machine;
 
 Machine *machines;
@@ -43,17 +45,48 @@ void distribute_job(int jobIndex)
 
     for (int i = 0; i < job->size; i++)
     {
+
         int machineNumber = job->sequence[i].machineNumber;
         int operationTime = job->sequence[i].operationTime;
 
         Machine *machine = &machines[machineNumber];
+        int startTime = 0;
 
         if (machine != NULL)
         {
             machine->hasJob = 1;
 
             // Define the startTimes of each operation
-            startTime += operationTime;
+            if (i == 0 && machine->totalTime == 0)
+            {
+                startTime = 0;
+            }
+            else if (i == 0 && machine->totalTime != 0)
+            {
+                startTime = machine->totalTime;
+            }
+            else if (i != 0 && machine->totalTime == 0)
+            {
+                startTime = job->totalTime;
+                machine->totalTime = startTime;
+            }
+            else if (i != 0 && machine->totalTime != 0)
+            {
+                if (machine->totalTime > job->totalTime)
+                {
+                    startTime = machine->totalTime;
+                    job->totalTime = startTime;
+                }
+                else
+                {
+                    startTime = job->totalTime;
+                    machine->totalTime = startTime;
+                }
+            }
+
+            machine->totalTime += operationTime;
+            job->totalTime += operationTime;
+
             // Write to the output file
             fprintf(outputFile, "%d,%d,%d,%d,%d\n",
                     jobNum, i, machineNumber, operationTime, startTime);
@@ -120,6 +153,7 @@ int main(int argc, char **argv)
         jobs[i].id = i;
         jobs[i].sequence = malloc(numJobs * sizeof(Item));
         jobs[i].size = numJobs;
+        jobs[i].totalTime = 0;
 
         for (int j = 0; j < numJobs; j++)
         {
@@ -134,6 +168,7 @@ int main(int argc, char **argv)
     {
         machines[i].id = i;
         machines[i].hasJob = 0;
+        machines[i].totalTime = 0;
     }
 
     // printf("Number of Machines: %d\n", numMachines);
