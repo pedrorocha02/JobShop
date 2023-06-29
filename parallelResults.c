@@ -18,13 +18,10 @@ int main(int argc, char *argv[])
 
     // Compile and execute sequential.c
     system("gcc -pthread main.c -o main");
+
     char command[100];
     sprintf(command, "D:/CAD/TrabalhoGrupo/main.exe input.txt output.txt %d", numThreads);
-
-    for (int i = 0; i < 1; i++)
-    {
-        system(command);
-    }
+    system(command);
 
     end_time = clock();
     execution_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;

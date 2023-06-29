@@ -33,18 +33,19 @@ Job *jobs;
 int count = 0;
 // Number of operations in the system
 int totalOperations;
-
-// Used to insure that the program executes all the operations before ending
+// Number of threads
+int numThreads;
+// Used to ensure that the program executes all the operations before ending
 pthread_mutex_t count_mutex;
 pthread_cond_t count_threshold_cv;
 
 void *distribute_job(void *arg)
 {
-    // Parsing the arg to a job
+    int threadIndex = *((int *)arg);
 
-    int jobIndex = *((int *)arg);
-    Job *job = &jobs[jobIndex];
-    int jobNum = job->id;
+    int jobsPerThread = totalOperations / numThreads;
+    int startJob = threadIndex * jobsPerThread;
+    int endJob = (threadIndex == numThreads - 1) ? totalOperations : (startJob + jobsPerThread);
 
     FILE *outputFile = fopen("output.txt", "a+");
     if (outputFile == NULL)
@@ -53,85 +54,91 @@ void *distribute_job(void *arg)
         pthread_exit(NULL);
     }
 
-    for (int i = 0; i < job->size; i++)
+    for (int jobIndex = startJob; jobIndex < endJob; jobIndex++)
     {
-        int machineNumber = job->sequence[i].machineNumber;
-        int operationTime = job->sequence[i].operationTime;
+        Job *job = &jobs[jobIndex];
+        int jobNum = job->id;
 
-        Machine *machine = &machines[machineNumber];
-        int startTime = 0;
-
-        if (machine != NULL)
+        for (int i = 0; i < job->size; i++)
         {
-            pthread_mutex_lock(&machine->barrier_mutex);
+            int machineNumber = job->sequence[i].machineNumber;
+            int operationTime = job->sequence[i].operationTime;
 
-            while (machine->hasJob == 1)
-            {
-                pthread_cond_wait(&machine->barrier_cond, &machine->barrier_mutex);
-            }
+            Machine *machine = &machines[machineNumber];
+            int startTime = 0;
 
-            machine->hasJob = 1;
+            if (machine != NULL)
+            {
+                pthread_mutex_lock(&machine->barrier_mutex);
 
-            // Define the startTimes of each operation
+                while (machine->hasJob == 1)
+                {
+                    pthread_cond_wait(&machine->barrier_cond, &machine->barrier_mutex);
+                }
 
-            if (i == 0 && machine->totalTime == 0)
-            {
-                startTime = 0;
-            }
-            else if (i == 0 && machine->totalTime != 0)
-            {
-                startTime = machine->totalTime;
-            }
-            else if (i != 0 && machine->totalTime == 0)
-            {
-                startTime = job->totalTime;
-                machine->totalTime = startTime;
-            }
-            else if (i != 0 && machine->totalTime != 0)
-            {
-                if (machine->totalTime > job->totalTime)
+                machine->hasJob = 1;
+
+                // Define the startTimes of each operation
+
+                if (i == 0 && machine->totalTime == 0)
+                {
+                    startTime = 0;
+                }
+                else if (i == 0 && machine->totalTime != 0)
                 {
                     startTime = machine->totalTime;
-                    job->totalTime = startTime;
                 }
-                else
+                else if (i != 0 && machine->totalTime == 0)
                 {
                     startTime = job->totalTime;
                     machine->totalTime = startTime;
                 }
+                else if (i != 0 && machine->totalTime != 0)
+                {
+                    if (machine->totalTime > job->totalTime)
+                    {
+                        startTime = machine->totalTime;
+                        job->totalTime = startTime;
+                    }
+                    else
+                    {
+                        startTime = job->totalTime;
+                        machine->totalTime = startTime;
+                    }
+                }
+
+                machine->totalTime += operationTime;
+                job->totalTime += operationTime;
+
+                pthread_mutex_unlock(&machine->barrier_mutex);
+
+                // Lock to count the number of executed operations with protection because it is a global count
+                // Lock to allow the write to the output file
+                pthread_mutex_lock(&count_mutex);
+
+                fprintf(outputFile, "%d,%d,%d,%d,%d\n",
+                        jobNum, i, machineNumber, operationTime, startTime);
+
+                fflush(outputFile);
+
+                // Count the number of executed operations with protection because it is a global count
+                // When the number of executed operations equals the operations in the system, the signal is transmitted
+
+                count++;
+                if (count == totalOperations)
+                {
+                    pthread_cond_signal(&count_threshold_cv);
+                }
+                pthread_mutex_unlock(&count_mutex);
+
+                // Set the hasJob property to 0 and signal that the operation has ended
+                pthread_mutex_lock(&machine->barrier_mutex);
+
+                machine->hasJob = 0;
+                pthread_cond_signal(&machine->barrier_cond);
+
+                pthread_mutex_unlock(&machine->barrier_mutex);
             }
-
-            machine->totalTime += operationTime;
-            job->totalTime += operationTime;
-
-            pthread_mutex_unlock(&machine->barrier_mutex);
-
-            // Lock to count of the number of executed operations with a protection beacuse it is a global count
-            // Lock to allow the write of the outputfile
-            pthread_mutex_lock(&count_mutex);
-
-            fprintf(outputFile, "%d,%d,%d,%d,%d\n",
-                    jobNum, i, machineNumber, operationTime, startTime);
-
-            fflush(outputFile);
-
-            // Count of the number of executed operations with a protection beacuse it is a global count
-            // When the number of executed operations equals the operations in system the signal is transmited
-
-            count++;
-            if (count == totalOperations)
-            {
-                pthread_cond_signal(&count_threshold_cv);
-            }
-            pthread_mutex_unlock(&count_mutex);
-
-            // Set the hasJob property to 0 and signal that the operation has ended
-            pthread_mutex_lock(&machine->barrier_mutex);
-
-            machine->hasJob = 0;
-            pthread_cond_signal(&machine->barrier_cond);
-
-            pthread_mutex_unlock(&machine->barrier_mutex);
         }
     }
 
@@ -175,8 +182,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    // Get the num of threads
-    int numThreads;
+    // Get the number of threads
     sscanf(argv[3], "%d", &numThreads);
 
     int numMachines, numJobs;
@@ -227,16 +233,16 @@ int main(int argc, char **argv)
     pthread_mutex_init(&count_mutex, NULL);
     pthread_cond_init(&count_threshold_cv, NULL);
 
-    int jobIndices[numJobs];
-    for (int i = 0; i < numJobs; i++)
+    int threadIndices[numThreads];
+    for (int i = 0; i < numThreads; i++)
     {
-        jobIndices[i] = i;
-        pthread_create(&threads[i], NULL, distribute_job, &jobIndices[i]);
+        threadIndices[i] = i;
+        pthread_create(&threads[i], NULL, distribute_job, &threadIndices[i]);
     }
 
     pthread_mutex_lock(&count_mutex);
 
-    // Wait until the number of executed operations is equal to the numeber of operations in the system
+    // Wait until the number of executed operations is equal to the number of operations in the system
     while (count < totalOperations)
     {
         pthread_cond_wait(&count_threshold_cv, &count_mutex);

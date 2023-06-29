@@ -11,10 +11,7 @@ int main()
 
     // Compile and execute sequential.c
     system("gcc sequencial.c -o sequencial");
-    for (int i = 0; i < 1; i++)
-    {
-        system("D:/CAD/TrabalhoGrupo/sequencial.exe input.txt output.txt");
-    }
+    system("D:/CAD/TrabalhoGrupo/sequencial.exe input.txt output.txt");
 
     end_time = clock();
     execution_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;

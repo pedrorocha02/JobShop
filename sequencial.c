@@ -29,7 +29,6 @@ Job *jobs;
 int count = 0;
 // Number of operations in the system
 int totalOperations;
-int startTime = 0;
 
 void distribute_job(int jobIndex)
 {
