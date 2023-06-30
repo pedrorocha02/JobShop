@@ -10,8 +10,8 @@ int main()
     start_time = clock();
 
     // Compile and execute sequential.c
-    system("gcc sequencial.c -o sequencial");
-    system("D:/CAD/TrabalhoGrupo/sequencial.exe input.txt output.txt");
+    system("gcc sequential.c -o sequential");
+    system("D:/CAD/TrabalhoGrupo/sequential.exe input.txt output.txt");
 
     end_time = clock();
     execution_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
