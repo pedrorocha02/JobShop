@@ -63,6 +63,7 @@ void distribute_job(int jobIndex)
             else if (i == 0 && machine->totalTime != 0)
             {
                 startTime = machine->totalTime;
+                job->totalTime = startTime;
             }
             else if (i != 0 && machine->totalTime == 0)
             {
@@ -170,9 +171,6 @@ int main(int argc, char **argv)
         machines[i].totalTime = 0;
     }
 
-    // printf("Number of Machines: %d\n", numMachines);
-    // printf("Number of Jobs: %d\n", numJobs);
-
     // Number of operations in the system
     totalOperations = numJobs * numMachines; // Number of operations
     // printf("%d", totalOperations);
@@ -181,8 +179,6 @@ int main(int argc, char **argv)
     {
         distribute_job(i);
     }
-
-    // printf("Num operations: %d\n", count);
 
     // Free the variables
     free(items);

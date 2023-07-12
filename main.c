@@ -87,6 +87,7 @@ void *distribute_job(void *arg)
                 else if (i == 0 && machine->totalTime != 0)
                 {
                     startTime = machine->totalTime;
+                    job->totalTime = startTime;
                 }
                 else if (i != 0 && machine->totalTime == 0)
                 {
